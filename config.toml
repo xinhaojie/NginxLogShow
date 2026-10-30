@@ -1,0 +1,28 @@
+# config.toml
+[server]
+host = "0.0.0.0"
+port = 80
+
+[sqlite]
+path = "data/logs.db"
+# 删除日志后自动整理数据库碎片（VACUUM 重写数据库文件，回收空闲页、缩小文件）
+vacuum_after_delete = true     # 总开关
+vacuum_min_deleted = 1000      # 删除条数达到该值才触发整理，避免小删除频繁全量重建
+# WAL 回写主库（checkpoint）相关：控制 -wal 文件体积，避免长期运行后无限膨胀
+wal_autocheckpoint = 1000      # 自动 checkpoint 阈值（页，1页=4096字节，默认1000≈4MB）
+journal_size_limit = 8388608   # WAL 文件硬上限（字节）：即使 checkpoint 滞后也限制 -wal 增长，默认 8MB
+# WAL 全部回写主库并截断 -wal 文件（长期运行后 -wal 可能与主库同量级）
+wal_checkpoint_enabled = true  # 总开关（关闭则启动与定时都不做）
+wal_checkpoint_time = "04:30"  # 每天定时执行时刻（HH:MM，本地时间），建议与自动清理错开
+# 注：服务启动时也会先合并一次 WAL（此时无业务读连接，截断成功率最高）
+
+[web]
+# 仪表盘页面登录（不登录不能打开页面与查询 API）
+# username 或 password 留空 "" 表示不启用登录保护（内网调试用）
+username = "xxxxxx"
+password = "xxxxxx"
+# 登录态有效期（天），到期后需重新登录
+session_days = 7
+
+# 说明：nginx 日志源（路径、log_format、解析间隔）不再写在本文件，
+# 而是在网页「配置」面板中管理，保存到 SQLite settings 表并热生效。

@@ -1,0 +1,13 @@
+# 测试环境配置（RUN_MODE=test 时覆盖 config.toml 同名字段）
+[server]
+host = "127.0.0.1"
+port = 18080
+
+[sqlite]
+path = "data/test_e2e.db"
+vacuum_after_delete = true
+vacuum_min_deleted = 1000
+wal_autocheckpoint = 1000
+journal_size_limit = 8388608
+wal_checkpoint_enabled = true
+wal_checkpoint_time = "04:30"

@@ -1,0 +1,37 @@
+services:
+  # 定义你的 Python 服务（可自定义名称，如 flask-app）
+  nginx_log_rs:
+    # 关键1：从本地 Dockerfile 构建镜像（而非拉取远程镜像）
+    
+    # 关键2：给镜像打标签（便于管理，格式：镜像名:版本）
+    image: debian:bookworm-slim
+    working_dir: /app
+    container_name: nginx_log_rs
+    network_mode: net_all
+    # 关键3：端口映射（宿主机端口:容器内端口，根据项目修改，如 Flask 默认 5000）
+    ports:
+      - "8088:80"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"   # 单个日志文件最大 50MB
+        max-file: "3"     # 最多保留 3 个文件
+    # 关键4：环境变量（传递给容器，如数据库地址、日志级别等）
+    environment:
+      - RUN_MODE=production  # Flask 生产环境（避免用 debug 模式）
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - ./logs:/logs
+      - ./:/app
+    # 关键5：重启策略（容器挂掉后自动重启，确保服务可用性）
+    restart: always
+    # （可选）数据卷挂载（若项目需持久化数据，如日志、配置文件）
+    # 指定网络和固定IP
+    command: ["/app/app"]
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "--timeout=5", "http://127.0.0.1:80/"]  # 容器内端口是80
+      interval: 60s        # 每30秒检查一次
+      timeout: 5s          # 检查超时时间5秒
+      retries: 3           # 连续3次失败视为不健康
+      start_period: 60s    # 服务启动后延迟10秒再开始检查（避免启动中误判）

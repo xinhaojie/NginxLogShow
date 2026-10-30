@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - NginxLog</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='1' y='1' width='30' height='30' rx='7' fill='%23161b22' stroke='%2358a6ff' stroke-width='2'/%3E%3Cpath d='M8 11h16M8 17h16M8 23h10' stroke='%2358a6ff' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+    <script>
+        // 与主页面共用同一份主题缓存（logServer.theme.v1），默认深色
+        try {
+            if (localStorage.getItem('logServer.theme.v1') === 'light') {
+                document.documentElement.dataset.theme = 'light';
+            }
+        } catch (e) {}
+    </script>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --card: #161b22;
+            --border: #30363d;
+            --text: #c9d1d9;
+            --text-dim: #8b949e;
+            --accent: #58a6ff;
+            --red: #f85149;
+            color-scheme: dark;
+        }
+        /* 浅色主题（与主页面一致） */
+        html[data-theme="light"] {
+            --bg: #f6f8fa;
+            --card: #ffffff;
+            --border: #d0d7de;
+            --text: #1f2328;
+            --text-dim: #656d76;
+            --accent: #0969da;
+            --red: #cf222e;
+            color-scheme: light;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 14px;
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 40px 36px;
+            width: 360px;
+            max-width: 90vw;
+        }
+        .login-card h1 {
+            font-size: 20px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 6px;
+        }
+        .login-card h1 span { color: var(--accent); }
+        .login-card .subtitle {
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 12px;
+            margin-bottom: 28px;
+        }
+        .field { margin-bottom: 16px; }
+        .field label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: 6px;
+        }
+        .field input {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 6px;
+            padding: 9px 12px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .field input:focus { border-color: var(--accent); }
+        .btn {
+            width: 100%;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            margin-top: 8px;
+        }
+        .btn:hover { opacity: 0.85; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .error {
+            color: var(--red);
+            font-size: 13px;
+            text-align: center;
+            margin-top: 12px;
+            min-height: 20px;
+            display: none;
+        }
+        .error.show { display: block; }
+
+        /* 窄屏自适应 */
+        @media (max-width: 480px) {
+            .login-card { padding: 28px 20px; }
+            .login-card h1 { font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h1>Nginx<span>Log</span></h1>
+        <div class="subtitle">请登录后查看访问统计</div>
+        <form id="loginForm" autocomplete="on">
+            <div class="field">
+                <label for="username">用户名</label>
+                <input type="text" id="username" name="username" placeholder="请输入用户名" required autofocus>
+            </div>
+            <div class="field">
+                <label for="password">密码</label>
+                <input type="password" id="password" name="password" placeholder="请输入密码" required>
+            </div>
+            <button type="submit" class="btn" id="loginBtn">登 录</button>
+            <div class="error" id="errorMsg"></div>
+        </form>
+    </div>
+
+    <script>
+        const form = document.getElementById('loginForm');
+        const btn = document.getElementById('loginBtn');
+        const errorMsg = document.getElementById('errorMsg');
+
+        // 已登录直接进入（页面级校验由后端中间件兜底）
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMsg.classList.remove('show');
+            btn.disabled = true;
+            btn.textContent = '登录中...';
+
+            try {
+                const resp = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: document.getElementById('username').value.trim(),
+                        password: document.getElementById('password').value
+                    })
+                });
+                const json = await resp.json();
+                if (resp.ok && json.code === 0) {
+                    location.href = '/';
+                } else {
+                    errorMsg.textContent = json.message || '登录失败，请重试';
+                    errorMsg.classList.add('show');
+                }
+            } catch (err) {
+                errorMsg.textContent = '网络错误，请稍后重试';
+                errorMsg.classList.add('show');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '登 录';
+            }
+        });
+    </script>
+</body>
+</html>

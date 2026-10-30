@@ -1,0 +1,42 @@
+[package]
+name = "nginx_log_rs"
+version = "1.0.0"
+edition = "2024"
+publish = false
+build = "build.rs"
+
+[dependencies]
+axum = { version = "0.8", features = ["macros"] }
+tokio = { version = "1.53", features = ["full"] }
+rusqlite = { version = "0.32", features = ["bundled"] }
+log = "0.4"
+flexi_logger = "0.31"
+nu-ansi-term = "0.50"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+config = "0.15"
+chrono = "0.4"
+anyhow = "1"
+shadow-rs = "2"
+# Web 登录 session token 签名（HMAC-SHA256）
+hmac = "0.12"
+sha2 = "0.10"
+# nginx log_format 字符串编译为正则解析
+regex = "1"
+# IP 归属地查询（ip9.com.cn，HTTPS 直连，UTF-8 JSON）
+ureq = { version = "2", default-features = false, features = ["json", "tls"] }
+
+[build-dependencies]
+shadow-rs = "2"
+
+[profile.release]
+opt-level = 3
+debug = false
+strip = true
+lto = true
+codegen-units = 1
+panic = "abort"
+incremental = false
+
+[lints.rust]
+unused_crate_dependencies = "warn"
