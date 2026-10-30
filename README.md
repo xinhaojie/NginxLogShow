@@ -1,5 +1,7 @@
 # NginxLog · nginx 日志分析服务
 
+> **🤖 AI 生成声明**：本项目代码由 AI 编写完成。如在使用中发现 Bug 或有改进建议，欢迎直接[提交 Issue 反馈](../../issues)，我们会跟进修复，无需自己逐行阅读代码排查问题。
+
 基于 **Rust + Axum + SQLite** 的轻量级 nginx 日志分析与可视化服务。后台线程周期性增量解析 nginx 访问日志（支持自定义 `log_format` 正则编译与 JSON 格式自动检测），结构化存入 SQLite（WAL 模式），并通过内置 Web 仪表盘提供多站点统计概览、访问明细查询与在线配置管理，无需重启即可热生效。
 
 > 单个静态编译二进制 + SQLite，无外部依赖，适合部署在任意 Linux 服务器 / Docker 环境中。
@@ -164,4 +166,4 @@ nginx_log_rs/
 
 ## 📄 License
 
-MIT
+[MIT](LICENSE)
